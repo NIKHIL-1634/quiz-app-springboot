@@ -30,6 +30,10 @@ public class QuizController {
     public ResponseEntity<Integer>submitQuiz(@PathVariable Integer id ,@RequestBody List<Response> responses) {
         return quizService.calculateResult(id,responses);
     }
+    @GetMapping("/all")
+    public ResponseEntity<List<com.jha.QuizApp.model.Quiz>> getAllQuizzes() {
+        return ResponseEntity.ok(quizService.getAllQuizzes());
+    }
 
 
 }

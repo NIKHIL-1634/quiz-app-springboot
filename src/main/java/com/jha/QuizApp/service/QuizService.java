@@ -68,6 +68,10 @@ public class QuizService {
 
         return new ResponseEntity<>(questionForUser, HttpStatus.OK);
     }
+    public List<Quiz> getAllQuizzes() {
+        return quizDao.findAll();
+    }
+
 
     // 🔹 Calculate Result (Correct Logic Using ID Matching)
     public ResponseEntity<Integer> calculateResult(Integer id, List<Response> responses) {
