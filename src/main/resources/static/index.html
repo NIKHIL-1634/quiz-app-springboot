@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Quiz App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -16,7 +17,7 @@
         }
 
         .container {
-            width: 90%;
+            width: 95%;
             max-width: 800px;
             background: white;
             padding: 30px;
@@ -62,15 +63,16 @@
             background: #5a67d8;
         }
 
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
         .question {
             margin-bottom: 20px;
             padding: 15px;
             background: #f9f9f9;
             border-radius: 10px;
-        }
-
-        .question h4 {
-            margin-bottom: 10px;
         }
 
         .option {
@@ -82,7 +84,12 @@
             font-size: 20px;
             font-weight: bold;
             text-align: center;
-            color: #333;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
         }
 
         hr {
@@ -119,9 +126,10 @@
 
     <div id="quizContainer"></div>
 
-    <button onclick="submitQuiz()">Submit Quiz</button>
+    <button id="submitBtn" onclick="submitQuiz()" disabled>Submit Quiz</button>
 
     <div class="result" id="result"></div>
+    <div class="error" id="error"></div>
 
 </div>
 
@@ -130,26 +138,59 @@
     let currentQuizId = null;
     let questions = [];
 
+    function showError(message) {
+        document.getElementById("error").innerText = message;
+    }
+
+    function clearError() {
+        document.getElementById("error").innerText = "";
+    }
+
     function createQuiz() {
+        clearError();
+
         let category = document.getElementById("category").value;
         let numQ = document.getElementById("numQ").value;
         let title = document.getElementById("title").value;
 
+        if (!category || !numQ || !title) {
+            showError("Please fill all fields.");
+            return;
+        }
+
         fetch(`/quiz/create?category=${category}&numQ=${numQ}&title=${title}`, {
             method: "POST"
         })
-        .then(res => res.text())
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to create quiz.");
+            return res.text();
+        })
         .then(data => alert(data))
-        .catch(err => alert("Error: " + err.message));
+        .catch(err => showError(err.message));
     }
 
     function loadQuiz() {
+        clearError();
+        document.getElementById("result").innerText = "";
 
         currentQuizId = document.getElementById("quizId").value;
 
+        if (!currentQuizId) {
+            showError("Please enter Quiz ID.");
+            return;
+        }
+
         fetch(`/quiz/get/${currentQuizId}`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Quiz not found.");
+            return res.json();
+        })
         .then(data => {
+
+            if (data.length === 0) {
+                showError("No questions found.");
+                return;
+            }
 
             questions = data;
             let container = document.getElementById("quizContainer");
@@ -176,18 +217,18 @@
                 `;
             });
 
+            document.getElementById("submitBtn").disabled = false;
         })
-        .catch(err => alert("Error: " + err.message));
+        .catch(err => showError(err.message));
     }
 
     function submitQuiz() {
+        clearError();
 
         let responses = [];
 
         questions.forEach(q => {
-
             let selected = document.querySelector(`input[name="q${q.id}"]:checked`);
-
             if (selected) {
                 responses.push({
                     id: q.id,
@@ -201,12 +242,15 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(responses)
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("Submission failed.");
+            return res.json();
+        })
         .then(score => {
             document.getElementById("result").innerText =
-                "🎯 Your Score: " + score + " / " + questions.length;
+                `🎯 Your Score: ${score} / ${questions.length}`;
         })
-        .catch(err => alert("Error: " + err.message));
+        .catch(err => showError(err.message));
     }
 
 </script>
