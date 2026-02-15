@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 30px;
+            background-color: #f2f2f2;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Quiz App</h1>
+
+<h3>Create Quiz</h3>
+<input type="text" id="category" placeholder="Category (Java)">
+<input type="number" id="numQ" placeholder="Number of Questions">
+<input type="text" id="title" placeholder="Quiz Title">
+<button onclick="createQuiz()">Create</button>
+
+<hr>
+
+<h3>Load Quiz</h3>
+<input type="number" id="quizId" placeholder="Quiz ID">
+<button onclick="loadQuiz()">Load Quiz</button>
+
+<hr>
+
+<div id="quizContainer"></div>
+
+<button onclick="submitQuiz()">Submit Quiz</button>
+
+<h2 id="result"></h2>
+
+<script>
+
+    let currentQuizId = null;
+    let questions = [];
+
+    function createQuiz() {
+        let category = document.getElementById("category").value;
+        let numQ = document.getElementById("numQ").value;
+        let title = document.getElementById("title").value;
+
+        fetch(`http://localhost:8080/quiz/create?category=${category}&numQ=${numQ}&title=${title}`, {
+            method: "POST"
+        })
+        .then(res => res.text())
+        .then(data => {
+            alert(data);
+        });
+    }
+
+    function loadQuiz() {
+
+        currentQuizId = document.getElementById("quizId").value;
+
+        fetch(`http://localhost:8080/quiz/get/${currentQuizId}`)
+        .then(res => res.json())
+        .then(data => {
+
+            questions = data;
+            let container = document.getElementById("quizContainer");
+            container.innerHTML = "";
+
+            data.forEach((q, index) => {
+
+                container.innerHTML += `
+                    <div class="question">
+                        <h4>${index + 1}. ${q.questionTitle}</h4>
+                        <input type="radio" name="q${q.id}" value="${q.option1}"> ${q.option1}<br>
+                        <input type="radio" name="q${q.id}" value="${q.option2}"> ${q.option2}<br>
+                        <input type="radio" name="q${q.id}" value="${q.option3}"> ${q.option3}<br>
+                        <input type="radio" name="q${q.id}" value="${q.option4}"> ${q.option4}<br>
+                    </div>
+                `;
+            });
+
+        });
+    }
+
+    function submitQuiz() {
+
+        let responses = [];
+
+        questions.forEach(q => {
+
+            let selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+
+            if (selected) {
+                responses.push({
+                    id: q.id,
+                    response: selected.value
+                });
+            }
+        });
+
+        fetch(`http://localhost:8080/quiz/submit/${currentQuizId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(responses)
+        })
+        .then(res => res.json())
+        .then(score => {
+            document.getElementById("result").innerText = "Your Score: " + score;
+        });
+    }
+
+</script>
+
+</body>
+</html>
