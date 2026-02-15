@@ -2,47 +2,128 @@
 <html>
 <head>
     <title>Quiz App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
         body {
-            font-family: Arial;
-            padding: 30px;
-            background-color: #f2f2f2;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        h3 {
+            margin-top: 25px;
+            color: #444;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px 5px 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: calc(33% - 12px);
+        }
+
+        input[type="number"] {
+            width: 120px;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
         .question {
             margin-bottom: 20px;
             padding: 15px;
-            background: white;
-            border-radius: 8px;
+            background: #f9f9f9;
+            border-radius: 10px;
         }
-        button {
-            padding: 10px 15px;
-            margin-top: 10px;
+
+        .question h4 {
+            margin-bottom: 10px;
+        }
+
+        .option {
+            margin: 6px 0;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+        }
+
+        hr {
+            margin: 25px 0;
+        }
+
+        @media(max-width: 600px) {
+            input {
+                width: 100%;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<h1>Quiz App</h1>
+<div class="container">
 
-<h3>Create Quiz</h3>
-<input type="text" id="category" placeholder="Category (Java)">
-<input type="number" id="numQ" placeholder="Number of Questions">
-<input type="text" id="title" placeholder="Quiz Title">
-<button onclick="createQuiz()">Create</button>
+    <h1>🚀 Quiz App</h1>
 
-<hr>
+    <h3>Create Quiz</h3>
+    <input type="text" id="category" placeholder="Category (Java)">
+    <input type="number" id="numQ" placeholder="No. of Questions">
+    <input type="text" id="title" placeholder="Quiz Title">
+    <button onclick="createQuiz()">Create</button>
 
-<h3>Load Quiz</h3>
-<input type="number" id="quizId" placeholder="Quiz ID">
-<button onclick="loadQuiz()">Load Quiz</button>
+    <hr>
 
-<hr>
+    <h3>Load Quiz</h3>
+    <input type="number" id="quizId" placeholder="Quiz ID">
+    <button onclick="loadQuiz()">Load</button>
 
-<div id="quizContainer"></div>
+    <hr>
 
-<button onclick="submitQuiz()">Submit Quiz</button>
+    <div id="quizContainer"></div>
 
-<h2 id="result"></h2>
+    <button onclick="submitQuiz()">Submit Quiz</button>
+
+    <div class="result" id="result"></div>
+
+</div>
 
 <script>
 
@@ -54,20 +135,19 @@
         let numQ = document.getElementById("numQ").value;
         let title = document.getElementById("title").value;
 
-        fetch(`http://localhost:8080/quiz/create?category=${category}&numQ=${numQ}&title=${title}`, {
+        fetch(`/quiz/create?category=${category}&numQ=${numQ}&title=${title}`, {
             method: "POST"
         })
         .then(res => res.text())
-        .then(data => {
-            alert(data);
-        });
+        .then(data => alert(data))
+        .catch(err => alert("Error: " + err.message));
     }
 
     function loadQuiz() {
 
         currentQuizId = document.getElementById("quizId").value;
 
-        fetch(`http://localhost:8080/quiz/get/${currentQuizId}`)
+        fetch(`/quiz/get/${currentQuizId}`)
         .then(res => res.json())
         .then(data => {
 
@@ -80,15 +160,24 @@
                 container.innerHTML += `
                     <div class="question">
                         <h4>${index + 1}. ${q.questionTitle}</h4>
-                        <input type="radio" name="q${q.id}" value="${q.option1}"> ${q.option1}<br>
-                        <input type="radio" name="q${q.id}" value="${q.option2}"> ${q.option2}<br>
-                        <input type="radio" name="q${q.id}" value="${q.option3}"> ${q.option3}<br>
-                        <input type="radio" name="q${q.id}" value="${q.option4}"> ${q.option4}<br>
+                        <div class="option">
+                            <input type="radio" name="q${q.id}" value="${q.option1}"> ${q.option1}
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q${q.id}" value="${q.option2}"> ${q.option2}
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q${q.id}" value="${q.option3}"> ${q.option3}
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q${q.id}" value="${q.option4}"> ${q.option4}
+                        </div>
                     </div>
                 `;
             });
 
-        });
+        })
+        .catch(err => alert("Error: " + err.message));
     }
 
     function submitQuiz() {
@@ -107,17 +196,17 @@
             }
         });
 
-        fetch(`http://localhost:8080/quiz/submit/${currentQuizId}`, {
+        fetch(`/quiz/submit/${currentQuizId}`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(responses)
         })
         .then(res => res.json())
         .then(score => {
-            document.getElementById("result").innerText = "Your Score: " + score;
-        });
+            document.getElementById("result").innerText =
+                "🎯 Your Score: " + score + " / " + questions.length;
+        })
+        .catch(err => alert("Error: " + err.message));
     }
 
 </script>
